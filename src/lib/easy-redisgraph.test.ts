@@ -75,15 +75,6 @@ describe('Query Tests', () => {
 
     // update
 
-
-    /*it('Get Query', () => {
-        const r = 
-        expect(r).toBe(`query { getLesson { me } }`);
-    });
-
-    it('Get Query with Filter', () => {
-        const r = 
-        expect(r).toBe(`query { getLesson(id: "2223a") { me } }`);
-    });*/
+    it.todo('Update user');
 
 });

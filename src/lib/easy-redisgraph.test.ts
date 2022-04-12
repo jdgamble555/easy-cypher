@@ -18,12 +18,12 @@ describe('Query Tests', () => {
     });
 
     it('Get user with displayName, email, and photoURL fields only', () => {
-        const r = createQuery({ cmd: 'query', type: 'User', fields: { displayName: 1, email: 1, photoURL: 1} });
+        const r = createQuery({ cmd: 'query', type: 'User', fields: { displayName: 1, email: 1, photoURL: 1 } });
         expect(r).toBe(`MATCH (a:User) RETURN { displayName: toJSON(a.displayName), email: toJSON(a.email), photoURL: toJSON(a.photoURL) }`);
     });
 
     it('Get user with email, id', () => {
-        const r = createQuery({ cmd: 'query', type: 'User', fields: { email: 1, id: 1} });
+        const r = createQuery({ cmd: 'query', type: 'User', fields: { email: 1, id: 1 } });
         expect(r).toBe(`MATCH (a:User) RETURN { email: toJSON(a.email), id: toJSON(ID(a)) }`);
     });
 
@@ -67,7 +67,7 @@ describe('Query Tests', () => {
     // upsert
 
     it('Upsert user by email - Add / Merge', () => {
-        const r = createQuery({ cmd: 'upsert', type: 'User', filter: { email: 'me@you.com' }, data: { name: 'Jon Smith'} });
+        const r = createQuery({ cmd: 'upsert', type: 'User', filter: { email: 'me@you.com' }, data: { name: 'Jon Smith' } });
         expect(r).toBe(`MERGE (a:User{email:'me@you.com'}) SET a.name='Jon Smith' RETURN toJSON(a)`);
     });
 

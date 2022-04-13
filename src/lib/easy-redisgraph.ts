@@ -8,7 +8,7 @@ enum CMD_TYPE {
     upsert
 };
 
-export const createQuery = ({ cmd, type, data, fields, filter, limit, offset, order }: {
+export const createQuery = ({ cmd, type, data, fields, filter, limit, offset, order, toJSON = false }: {
     cmd: keyof typeof CMD_TYPE,
     type?: string,
     fields?: any,
@@ -16,7 +16,8 @@ export const createQuery = ({ cmd, type, data, fields, filter, limit, offset, or
     filter?: any,
     limit?: number,
     offset?: number,
-    order?: any
+    order?: any,
+    toJSON?: boolean
 }) => {
     const cmds = {
         add: 'CREATE',
@@ -37,7 +38,7 @@ export const createQuery = ({ cmd, type, data, fields, filter, limit, offset, or
         }).join(', ');
 
     const createFields = (j: any, v: string) =>
-        Object.keys(j).map((k: string) => `${k}: toJSON(` + (k === 'id' ? 'ID(a)' : `${v}.${k}`) + `)`).join(', ');
+        Object.keys(j).map((k: string) => `${k}: ` + (k === 'id' ? 'ID(a)' : `${v}.${k}`)).join(', ');
 
     // add where to search
     if (filter && !filter.id && cmd !== 'upsert') {
@@ -55,7 +56,8 @@ export const createQuery = ({ cmd, type, data, fields, filter, limit, offset, or
         }
     }
     // format input data
-    const _data = data ? json5.stringify(cmd === 'upsert' ? filter : data) : '';
+    const _data = data ? ' ' + json5.stringify(cmd === 'upsert' ? filter : data)
+        .replace(/{/g, '{ ').replace(/}/g, ' }').replace(/'/g, "\"").replace(/:/, ': ') : '';
 
     // delete
     const _delete = cmd === 'delete' ? 'DETACH DELETE a ' : '';
@@ -73,7 +75,10 @@ export const createQuery = ({ cmd, type, data, fields, filter, limit, offset, or
     const _order = order ? ' ORDER BY ' + createOrders(order, 'a') : '';
 
     // fields
-    const _fields = fields ? '{ ' + createFields(fields, 'a') + ' }' : 'toJSON(a)';
+    let _fields = fields ? '{ ' + createFields(fields, 'a') + ' }' : 'a';
+
+    // return json
+    _fields = toJSON ? 'toJSON(' + _fields + ')' : _fields;
 
     return cmds[cmd] + ` (a` + (type ? `:${type}` : '') + _data + ') ' + _where + _set + _delete + `RETURN ` + _fields + _order + _limit + _offset;
 };

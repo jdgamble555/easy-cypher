@@ -8,12 +8,12 @@ enum CMD_TYPE {
     upsert
 };
 
-export const createQuery = ({ cmd, type, set, fields, filter, limit, offset, order, toJSON = false }: {
+export const createQuery = ({ cmd, type, set, fields, where, limit, offset, order, toJSON = false }: {
     cmd: keyof typeof CMD_TYPE,
     type?: string,
     fields?: any,
     set?: any,
-    filter?: any,
+    where?: any,
     limit?: number,
     offset?: number,
     order?: any,
@@ -41,22 +41,22 @@ export const createQuery = ({ cmd, type, set, fields, filter, limit, offset, ord
         Object.keys(j).map((k: string) => `${k}: ` + (k === 'id' ? 'ID(a)' : `${v}.${k}`)).join(', ');
 
     // add where to search
-    if (filter && !filter.id && cmd !== 'upsert') {
-        set = { ...set, ...filter };
+    if (where && !where.id && cmd !== 'upsert') {
+        set = { ...set, ...where };
     }
 
     // filter by id(s)
     let _where = '';
-    if (filter?.id && cmd !== 'upsert' && cmd !== 'update') {
+    if (where?.id && cmd !== 'upsert' && cmd !== 'update') {
         _where += 'WHERE ID(a)';
-        if (Array.isArray(filter.id)) {
-            _where += ' in [' + (filter.id as Array<any>).join(', ') + '] ';
+        if (Array.isArray(where.id)) {
+            _where += ' in [' + (where.id as Array<any>).join(', ') + '] ';
         } else {
-            _where += ' = ' + filter.id + ' ';
+            _where += ' = ' + where.id + ' ';
         }
     }
     // format input data
-    const _data = set ? ' ' + json5.stringify(cmd === 'upsert' || cmd === 'update' ? filter : set)
+    const _data = set ? ' ' + json5.stringify(cmd === 'upsert' || cmd === 'update' ? where : set)
         .replace(/{/g, '{ ').replace(/}/g, ' }').replace(/:/g, ': ').replace(/,/g, ', ') : '';
 
     // delete
@@ -79,4 +79,11 @@ export const createQuery = ({ cmd, type, set, fields, filter, limit, offset, ord
     _fields = toJSON ? 'toJSON(' + _fields + ')' : _fields;
 
     return cmds[cmd] + ` (a` + (type ? `:${type}` : '') + _data + ') ' + _where + _set + _delete + `RETURN ` + _fields + _order + _limit + _offset;
+};
+
+export const generateCypher = () => {
+
+
+
+
 };

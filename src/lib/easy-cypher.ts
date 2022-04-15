@@ -8,11 +8,11 @@ enum CMD_TYPE {
     upsert
 };
 
-export const createQuery = ({ cmd, type, data, fields, filter, limit, offset, order, toJSON = false }: {
+export const createQuery = ({ cmd, type, set, fields, filter, limit, offset, order, toJSON = false }: {
     cmd: keyof typeof CMD_TYPE,
     type?: string,
     fields?: any,
-    data?: any,
+    set?: any,
     filter?: any,
     limit?: number,
     offset?: number,
@@ -21,7 +21,7 @@ export const createQuery = ({ cmd, type, data, fields, filter, limit, offset, or
 }) => {
     const cmds = {
         add: 'CREATE',
-        update: 'UPDATE',
+        update: 'MATCH',
         delete: 'MATCH',
         query: 'MATCH',
         upsert: 'MERGE'
@@ -29,7 +29,7 @@ export const createQuery = ({ cmd, type, data, fields, filter, limit, offset, or
 
     // value functions
     const createVals = (j: any, v: string) =>
-        Object.keys(j).map((k: string) => `${v}.${k}='${j[k]}'`).join(', ');
+        Object.keys(j).map((k: string) => `${v}.${k} = '${j[k]}'`).join(', ');
 
     const createOrders = (j: any, v: string) =>
         Object.keys(j).map((k: string) => {
@@ -42,30 +42,28 @@ export const createQuery = ({ cmd, type, data, fields, filter, limit, offset, or
 
     // add where to search
     if (filter && !filter.id && cmd !== 'upsert') {
-        data = { ...data, ...filter };
+        set = { ...set, ...filter };
     }
 
     // filter by id(s)
     let _where = '';
-    if (filter?.id) {
+    if (filter?.id && cmd !== 'upsert' && cmd !== 'update') {
         _where += 'WHERE ID(a)';
         if (Array.isArray(filter.id)) {
-            _where += ' in [' + (filter.id as Array<any>).toString() + '] ';
+            _where += ' in [' + (filter.id as Array<any>).join(', ') + '] ';
         } else {
-            _where += '=' + filter.id + ' ';
+            _where += ' = ' + filter.id + ' ';
         }
     }
     // format input data
-    const _data = data ? ' ' + json5.stringify(cmd === 'upsert' ? filter : data)
-        .replace(/{/g, '{ ').replace(/}/g, ' }').replace(/'/g, "\"").replace(/:/, ': ') : '';
+    const _data = set ? ' ' + json5.stringify(cmd === 'upsert' || cmd === 'update' ? filter : set)
+        .replace(/{/g, '{ ').replace(/}/g, ' }').replace(/:/g, ': ').replace(/,/g, ', ') : '';
 
     // delete
     const _delete = cmd === 'delete' ? 'DETACH DELETE a ' : '';
 
-    // TODO - upsert by id
-
     // upsert
-    const _set = cmd === 'upsert' ? 'SET ' + createVals(data, 'a') + ' ' : '';
+    const _set = cmd === 'upsert' || cmd === 'update' ? 'SET ' + createVals(set, 'a') + ' ' : '';
 
     // limit and offset
     const _limit = limit ? ' LIMIT ' + limit : '';

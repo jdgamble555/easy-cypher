@@ -1,7 +1,7 @@
 {
-  "name": "easy-redisgraph",
+  "name": "easy-cypher",
   "version": "1.0.01",
-  "description": "A quick way to generate cypher queries in redisgraph.",
+  "description": "A quick way to generate cypher queries from JSON.",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
   "module": "build/module/index.js",
@@ -9,19 +9,20 @@
   "keywords": [
     "redis",
     "easy",
-    "easy-redisgraph",
+    "easy-cypher",
     "redisgraph",
+    "neo4j",
     "graphql"
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jdgamble555/easy-redisgraph"
+    "url": "git+https://github.com/jdgamble555/easy-cypher"
   },
   "author": "Jonathan Gamble",
   "bugs": {
-    "url": "https://github.com/jdgamble555/easy-redisgraph/issues"
+    "url": "https://github.com/jdgamble555/easy-cypher/issues"
   },
-  "homepage": "https://github.com/jdgamble555/easy-redisgraph",
+  "homepage": "https://github.com/jdgamble555/easy-cypher",
   "scripts": {
     "pub": "npm publish --access public",
     "build": "run-p build:*",

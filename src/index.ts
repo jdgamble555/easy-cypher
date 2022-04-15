@@ -1,1 +1,1 @@
-export * from './lib/easy-redisgraph';
+export * from './lib/easy-cypher';

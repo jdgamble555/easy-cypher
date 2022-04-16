@@ -27,18 +27,15 @@ export const createQuery = ({ cmd, type, set, fields, where, limit, offset, orde
         upsert: 'MERGE'
     };
 
-    // value functions
-    const createVals = (j: any, v: string) =>
-        Object.keys(j).map((k: string) => `${v}.${k} = '${j[k]}'`).join(', ');
+    // fields
+    let _fields = fields ? '{ ' + createFields(fields, 'a') + ' }' : 'a';
 
-    const createOrders = (j: any, v: string) =>
-        Object.keys(j).map((k: string) => {
-            const _dir = (j[k] as string).toLowerCase() === 'desc' ? ' DESC' : '';
-            return k === 'id' ? `id(n)` : `${v}.${k}` + _dir;
-        }).join(', ');
+    /*if (fields) {
+        if (Object.keys(fields)) {
+            s
+        }
+    }*/
 
-    const createFields = (j: any, v: string) =>
-        Object.keys(j).map((k: string) => `${k}: ` + (k === 'id' ? 'ID(a)' : `${v}.${k}`)).join(', ');
 
     // add where to search
     if (where && !where.id && cmd !== 'upsert') {
@@ -72,18 +69,31 @@ export const createQuery = ({ cmd, type, set, fields, where, limit, offset, orde
     // order by
     const _order = order ? ' ORDER BY ' + createOrders(order, 'a') : '';
 
-    // fields
-    let _fields = fields ? '{ ' + createFields(fields, 'a') + ' }' : 'a';
-
     // return json
     _fields = toJSON ? 'toJSON(' + _fields + ')' : _fields;
 
     return cmds[cmd] + ` (a` + (type ? `:${type}` : '') + _data + ') ' + _where + _set + _delete + `RETURN ` + _fields + _order + _limit + _offset;
 };
 
-export const generateCypher = () => {
+
+// value functions -- keep at top --
+const createVals = (j: any, v: string) =>
+    Object.keys(j).map((k: string) => `${v}.${k} = '${j[k]}'`).join(', ');
+
+const createOrders = (j: any, v: string) =>
+    Object.keys(j).map((k: string) => {
+        const _dir = (j[k] as string).toLowerCase() === 'desc' ? ' DESC' : '';
+        return k === 'id' ? `id(n)` : `${v}.${k}` + _dir;
+    }).join(', ');
+
+const createFields = (j: any, v: string) =>
+    Object.keys(j).map((k: string) => `${k}: ` + (k === 'id' ? 'ID(a)' : `${v}.${k}`)).join(', ');
 
 
+    // cmd (label:type obj)-[label:type obj]->||- repeat
+    // type: 'User', fields: { name: 1, email: 1 }
+    // type: 'User', fields: { movies: { name: 1 }, email: 1 }
+    // match (a1:User)-[:movies]-(a2:Movie) return { name: a1.name, movies: { name: a2.name }, email: a1.email }
+    // match (a1:User), (a2:Movie) where a.name='jill' and b.name='Clue' create (a1)-[r:movies]->(b) return type(r)
+    // 
 
-
-};

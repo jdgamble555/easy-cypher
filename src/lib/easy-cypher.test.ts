@@ -99,11 +99,26 @@ describe('Query Tests', () => {
         expect(r).toBe(`MATCH (a:User { id: 6 }) SET a.name = 'Jon Doe' RETURN a`);
     });
 
+    // fix below, incorrect id case
+
     it('Update user with multiple filters', () => {
         const r = createQuery({ cmd: 'update', type: 'User', where: { id: 6, email: 'me@you.com' }, set: { name: 'Jon Doe' }});
         expect(r).toBe(`MATCH (a:User { id: 6, email: 'me@you.com' }) SET a.name = 'Jon Doe' RETURN a`);
     });
 
     it.todo('OR where clauses');
+
+    it.todo('get nested values... fields: { actedIn: { title } } ---> ')
+
+    // MATCH (movie:Movie { title: 'Wall Street' })-[:actors]->(actor:name)
+    // MATCH (a:User { id: 6 })-[:movies]-(b:Movie) RETURN { b.name }
+
+    /*
+
+    it('slsls', () => {
+        const r = createQuery({ cmd: 'query', type: 'User', fields: { name}})
+    });
+
+    */
 
 });

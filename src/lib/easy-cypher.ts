@@ -30,12 +30,6 @@ export const createQuery = ({ cmd, type, set, fields, where, limit, offset, orde
     // fields
     let _fields = fields ? '{ ' + createFields(fields, 'a') + ' }' : 'a';
 
-    /*if (fields) {
-        if (Object.keys(fields)) {
-            s
-        }
-    }*/
-
 
     // add where to search
     if (where && !where.id && cmd !== 'upsert') {
@@ -90,10 +84,9 @@ const createFields = (j: any, v: string) =>
     Object.keys(j).map((k: string) => `${k}: ` + (k === 'id' ? 'ID(a)' : `${v}.${k}`)).join(', ');
 
 
+    // -- todo --
     // cmd (label:type obj)-[label:type obj]->||- repeat
     // type: 'User', fields: { name: 1, email: 1 }
     // type: 'User', fields: { movies: { name: 1 }, email: 1 }
     // match (a1:User)-[:movies]-(a2:Movie) return { name: a1.name, movies: { name: a2.name }, email: a1.email }
     // match (a1:User), (a2:Movie) where a.name='jill' and b.name='Clue' create (a1)-[r:movies]->(b) return type(r)
-    // 
-

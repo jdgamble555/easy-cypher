@@ -110,15 +110,5 @@ describe('Query Tests', () => {
 
     it.todo('get nested values... fields: { actedIn: { title } } ---> ')
 
-    // MATCH (movie:Movie { title: 'Wall Street' })-[:actors]->(actor:name)
-    // MATCH (a:User { id: 6 })-[:movies]-(b:Movie) RETURN { b.name }
-
-    /*
-
-    it('slsls', () => {
-        const r = createQuery({ cmd: 'query', type: 'User', fields: { name}})
-    });
-
-    */
 
 });

@@ -1,5 +1,7 @@
 import json5 from "json5";
 
+import { createFields, createOrders, createVals } from "./utils";
+
 enum CMD_TYPE {
     add,
     update,
@@ -30,31 +32,30 @@ export const createQuery = ({ cmd, type, set, fields, where, limit, offset, orde
     // fields
     let _fields = fields ? '{ ' + createFields(fields, 'a') + ' }' : 'a';
 
-
-    // add where to search
-    if (where && !where.id && cmd !== 'upsert') {
-        set = { ...set, ...where };
-    }
-
     // filter by id(s)
     let _where = '';
-    if (where?.id && cmd !== 'upsert' && cmd !== 'update') {
+    if (where?.id) {
         _where += 'WHERE ID(a)';
         if (Array.isArray(where.id)) {
             _where += ' in [' + (where.id as Array<any>).join(', ') + '] ';
         } else {
             _where += ' = ' + where.id + ' ';
         }
+        delete where['id'];
+        if (Object.keys(where).length === 0) {
+            where = undefined;
+        }
     }
     // format input data
-    const _data = set ? ' ' + json5.stringify(cmd === 'upsert' || cmd === 'update' ? where : set)
-        .replace(/{/g, '{ ').replace(/}/g, ' }').replace(/:/g, ': ').replace(/,/g, ', ') : '';
 
+    const _data = where ? ' ' + json5.stringify(where)
+        .replace(/{/g, '{ ').replace(/}/g, ' }').replace(/:/g, ': ').replace(/,/g, ', ') : '';
+    
     // delete
     const _delete = cmd === 'delete' ? 'DETACH DELETE a ' : '';
 
     // upsert
-    const _set = cmd === 'upsert' || cmd === 'update' ? 'SET ' + createVals(set, 'a') + ' ' : '';
+    const _set = cmd === 'upsert' || cmd === 'update' || cmd === 'add' && set ? 'SET ' + createVals(set, 'a') + ' ' : '';
 
     // limit and offset
     const _limit = limit ? ' LIMIT ' + limit : '';
@@ -70,23 +71,54 @@ export const createQuery = ({ cmd, type, set, fields, where, limit, offset, orde
 };
 
 
-// value functions -- keep at top --
-const createVals = (j: any, v: string) =>
-    Object.keys(j).map((k: string) => `${v}.${k} = '${j[k]}'`).join(', ');
-
-const createOrders = (j: any, v: string) =>
-    Object.keys(j).map((k: string) => {
-        const _dir = (j[k] as string).toLowerCase() === 'desc' ? ' DESC' : '';
-        return k === 'id' ? `id(n)` : `${v}.${k}` + _dir;
-    }).join(', ');
-
-const createFields = (j: any, v: string) =>
-    Object.keys(j).map((k: string) => `${k}: ` + (k === 'id' ? 'ID(a)' : `${v}.${k}`)).join(', ');
 
 
-    // -- todo --
-    // cmd (label:type obj)-[label:type obj]->||- repeat
-    // type: 'User', fields: { name: 1, email: 1 }
-    // type: 'User', fields: { movies: { name: 1 }, email: 1 }
-    // match (a1:User)-[:movies]-(a2:Movie) return { name: a1.name, movies: { name: a2.name }, email: a1.email }
-    // match (a1:User), (a2:Movie) where a.name='jill' and b.name='Clue' create (a1)-[r:movies]->(b) return type(r)
+
+// -- todo --
+// cmd (label:type obj)-[label:type obj]->||- repeat
+// type: 'User', fields: { name: 1, email: 1 }
+// type: 'User', fields: { movies: { name: 1 }, email: 1 }
+// match (a1:User)-[:movies]-(a2:Movie) return { name: a1.name, movies: { name: a2.name }, email: a1.email }
+// match (a1:User), (a2:Movie) where a.name='jill' and b.name='Clue' create (a1)-[r:movies]->(b) return type(r)
+/* MATCH (n:Person)
+WHERE n.name = 'Peter' XOR (n.age < 30 AND n.name = 'Timothy') OR NOT (n.name = 'Timothy' OR n.name = 'Peter')
+RETURN
+    n.name AS name,
+    n.age AS age
+ORDER BY name
+
+OPTIONAL MATCH (u:User)
+WHERE u.email = 'me@you.com'
+OR u.username = 'bill'
+WITH u IS NULL AS missing
+WHERE missing = true
+CREATE (u2:User { email: 'me@you.com', username: 'bill' })
+
+
+    async addNode({ label, keys, params }: { label: string, keys: { [x: string]: any }, params: { [x: string]: any } }) {
+        // create only if key(s) DNE
+        //return await this.query(`MERGE (n:${label} ${json5.stringify(keys)}) ON CREATE SET ${createVals(params, 'n')} RETURN toJSON(n)`);
+        let r = '';
+        Object.keys(keys).forEach((k: string, i: number) => {
+            //if (r) r+= 'OR '
+            r += `OPTIONAL MATCH (n${i}:${label} { ${k}: '${keys[k]}' }) `;
+        });
+        r += 'WHERE ';
+        Object.keys(keys).forEach((k: string, i: number) => {
+            if (i > 0) r += 'AND ';
+            r += `n${i} IS NULL `;
+        })
+        r += `SET ${createVals(params, 'n0')} RETURN `;
+        Object.keys(keys).forEach((k: string, i: number) => {
+            if (i > 0) r += ', ';
+            r += `toJSON(n${i})`;
+        });
+        console.log(r);
+        return await this.query(r);
+    }
+
+
+*/
+
+
+

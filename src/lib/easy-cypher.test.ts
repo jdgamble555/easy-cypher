@@ -75,7 +75,7 @@ describe('Query Tests', () => {
 
     it('Add user where name is Jon', () => {
         const r = createQuery({ cmd: 'add', type: 'User', set: { name: 'Jon' }});
-        expect(r).toBe(`CREATE (a:User { name: 'Jon' }) RETURN a`);
+        expect(r).toBe(`CREATE (a:User) SET a.name = 'Jon' RETURN a`);
     });
 
     it.todo('Add user only if email DNE');
@@ -89,21 +89,19 @@ describe('Query Tests', () => {
 
     it('Upsert user by id', () => {
         const r = createQuery({ cmd: 'upsert', type: 'User', where: { id: 6 }, set: { name: 'Jon Doe' }});
-        expect(r).toBe(`MERGE (a:User { id: 6 }) SET a.name = 'Jon Doe' RETURN a`);
+        expect(r).toBe(`MERGE (a:User) WHERE ID(a) = 6 SET a.name = 'Jon Doe' RETURN a`);
     });
 
     // update
 
     it('Update user', () => {
         const r = createQuery({ cmd: 'update', type: 'User', where: { id: 6 }, set: { name: 'Jon Doe' }});
-        expect(r).toBe(`MATCH (a:User { id: 6 }) SET a.name = 'Jon Doe' RETURN a`);
+        expect(r).toBe(`MATCH (a:User) WHERE ID(a) = 6 SET a.name = 'Jon Doe' RETURN a`);
     });
-
-    // fix below, incorrect id case
 
     it('Update user with multiple filters', () => {
         const r = createQuery({ cmd: 'update', type: 'User', where: { id: 6, email: 'me@you.com' }, set: { name: 'Jon Doe' }});
-        expect(r).toBe(`MATCH (a:User { id: 6, email: 'me@you.com' }) SET a.name = 'Jon Doe' RETURN a`);
+        expect(r).toBe(`MATCH (a:User { email: 'me@you.com' }) WHERE ID(a) = 6 SET a.name = 'Jon Doe' RETURN a`);
     });
 
     it.todo('OR where clauses');

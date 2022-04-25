@@ -78,7 +78,9 @@ describe('Query Tests', () => {
         expect(r).toBe(`CREATE (a:User) SET a.name = 'Jon' RETURN a`);
     });
 
-    it.todo('Add user only if email DNE');
+    it('Add user only if email DNE', () => {
+        const r = createQuery({ cmd: 'add', type: 'User', set: { name: 'Steve' }})
+    });
 
     // upsert
 

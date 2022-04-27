@@ -1,6 +1,4 @@
-import json5 from "json5";
-
-import { createFields, createOrders, createVals } from "./utils";
+import { createFields, createOrders, createVals, createWhere, prettyJSON } from "./utils";
 
 enum CMD_TYPE {
     add,
@@ -29,45 +27,41 @@ export const createQuery = ({ cmd, type, set, fields, where, limit, offset, orde
         upsert: 'MERGE'
     };
 
-    // fields
-    let _fields = fields ? '{ ' + createFields(fields, 'a') + ' }' : 'a';
+    const isCreate = cmd === 'upsert' || cmd === 'update' || cmd === 'add';
 
     // filter by id(s)
-    let _where = '';
-    if (where?.id) {
-        _where += 'WHERE ID(a)';
-        if (Array.isArray(where.id)) {
-            _where += ' in [' + (where.id as Array<any>).join(', ') + '] ';
-        } else {
-            _where += ' = ' + where.id + ' ';
-        }
-        delete where['id'];
-        if (Object.keys(where).length === 0) {
-            where = undefined;
-        }
-    }
-    // format input data
+    const _where = (where?.id) ? createWhere(where, 'a1') : '';
 
-    const _data = where ? ' ' + json5.stringify(where)
-        .replace(/{/g, '{ ').replace(/}/g, ' }').replace(/:/g, ': ').replace(/,/g, ', ') : '';
-    
-    // delete
-    const _delete = cmd === 'delete' ? 'DETACH DELETE a ' : '';
+    if (where?.id) {
+        delete where['id'];
+    }
+
+    // format where filter
+    const _data = where && Object.keys(where).length > 0 ? ' ' + prettyJSON(where) : '';
+
+    // delete (todo: detach for neo4j)
+    const _delete = cmd === 'delete' ? 'DELETE a ' : '';
 
     // upsert
-    const _set = cmd === 'upsert' || cmd === 'update' || cmd === 'add' && set ? 'SET ' + createVals(set, 'a') + ' ' : '';
+    const _set = isCreate && set ? 'SET ' + createVals(set, 'a1') + ' ' : '';
 
     // limit and offset
     const _limit = limit ? ' LIMIT ' + limit : '';
     const _offset = offset ? ' SKIP ' + offset : '';
 
     // order by
-    const _order = order ? ' ORDER BY ' + createOrders(order, 'a') : '';
+    const _order = order ? ' ORDER BY ' + createOrders(order, 'a1') : '';
 
-    // return json
+    // fields
+    let _fields = fields ? '{ ' + createFields(fields, 'a1') + ' }' : 'a1';
+
+    // toJSON
     _fields = toJSON ? 'toJSON(' + _fields + ')' : _fields;
 
-    return cmds[cmd] + ` (a` + (type ? `:${type}` : '') + _data + ') ' + _where + _set + _delete + `RETURN ` + _fields + _order + _limit + _offset;
+    // build statement
+    return cmds[cmd] + ` (a1` + (type ? `:${type}` : '') + _data + ') '
+        + _where + _set + _delete + `RETURN `
+        + _fields + _order + _limit + _offset;
 };
 
 
@@ -90,8 +84,8 @@ ORDER BY name
 OPTIONAL MATCH (u:User)
 WHERE u.email = 'me@you.com'
 OR u.username = 'bill'
-WITH u IS NULL AS missing
-WHERE missing = true
+WITH u IS NULL AS dne
+WHERE dne = true
 CREATE (u2:User { email: 'me@you.com', username: 'bill' })
 
 

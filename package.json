@@ -1,0 +1,21 @@
+{
+  "name": "easy-cypher",
+  "version": "1.0.0",
+  "description": "A typescript cypher builder and validator.",
+  "main": "index.js",
+  "scripts": {
+    "test": "vitest",
+    "coverage": "vitest run --coverage",
+    "build": "tsc"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "typescript": "^4.9.4",
+    "vitest": "^0.28.3"
+  },
+  "wallaby": {
+    "autoDetect": true,
+    "trace": true
+  }
+}

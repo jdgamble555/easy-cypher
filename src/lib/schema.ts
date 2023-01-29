@@ -1,9 +1,10 @@
 export class Schema {
 
-    schema: schemaInput;
+    private schema: schemaInput;
+    private options: schemaOptions;
 
-    constructor(schema: schemaInput) {
-        //
+    constructor(schema: schemaInput, options: schemaOptions = { database: 'redisgraph', jsonOutput: true }) {
+        this.options = options;
         this.schema = schema;
     }
 
@@ -57,6 +58,12 @@ export interface validators {
     type: schemaTypes;
     required?: boolean;
     default?: string | number | boolean | Date;
+    unique?: boolean;
 };
 
-export type schemaInput = Record<string, Record<string, schemaTypes | validators>>; 
+export type schemaInput = Record<string, Record<string, schemaTypes | validators>>;
+
+export interface schemaOptions {
+    database?: 'redisgraph' | 'neo4j';
+    jsonOutput?: boolean;
+};

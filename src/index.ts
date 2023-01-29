@@ -1,3 +1,1 @@
-const x = 'yup';
-
-console.log(x);
+export * from './lib/schema';
